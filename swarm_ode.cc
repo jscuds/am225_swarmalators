@@ -14,16 +14,18 @@ void swarm::init(double *q) {
     
     for (int i=0; i<3*N; i+=3) {
         // generate random number
-        rand = c->doub();
+
 
         // get x and y positions
-        t_temp = 2.*M_PI*rand;
-        r_temp = c->doub();
+        t_temp = 2 * M_PI * (c->doub());
+        r_temp = sqrt(c->doub());
+
+        th0 = 2 * M_PI * (c->doub());
 
         // initialize solution vector
         q[i] = r_temp*cos(t_temp);
         q[i+1] = r_temp*sin(t_temp);
-        q[i+2] = 2.*M_PI*rand;
+        q[i+2] = th0;
     }
     delete [] c;
 }
