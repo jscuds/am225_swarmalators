@@ -1,4 +1,5 @@
-# Include the configuration file
+# Include the configuration file which defines cxx and cflags
+include ./config.mk
 
 # Lists of files to be built
 objs= problem_1_rk4d.o
@@ -13,16 +14,16 @@ all: $(execs)
 
 # A Makefile target to refresh the dependency file
 depend:
-	g++-10 -fopenmp -MM $(src) >Makefile.dep
+	$(cxx) -MM $(src) >Makefile.dep
 
 # A Makefile target to remove all the built files
 clean:
 	rm -f $(objs) $(execs)
 
 %.o: %.cpp
-	g++-10 -g -Wall -Wextra -fopenmp -c $<
+	$(cxx) $(cflags) -c $<
 
-p5: problem_5.cpp $(objs)
-	g++-10 -g -Wall -Wextra -fopenmp -O3 -o p5 problem_5.cpp problem_1_rk4d.o 
+p5: problem_5.cc $(objs)
+	$(cxx) $(cflags) -o $@ $^
 
 .PHONY: clean depend

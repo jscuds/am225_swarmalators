@@ -13,11 +13,11 @@
 
 int main() {
     
-    double J=1., K=-0.2, N=1250;
+    double J=0.5, K=-0.5, N=1250;
     
     p5_rk4d* o; o=new p5_rk4d(J, K, N);
 //    o->solve_fixed(1,0.000001,false,0);
-    o->solve_fixed(250.,0.000001,false,500);
+    o->solve_fixed(250.,0.000001,false,460);
     
 }
 
