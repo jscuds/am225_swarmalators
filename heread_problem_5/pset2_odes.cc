@@ -64,8 +64,8 @@ void agents::equation(double t, double *y, double *dy){
         int idx_start = i * 3;
         double temp_sum[] = {0,0};
         double temp_sum_th = 0;
-        double* x_i = y + idx_start;
-        double* theta_i = y + idx_start + 2;
+        double* x_i = y + idx_start; //y is state vector (x,y,theta)
+        double* theta_i = y + idx_start + 2; 
         double* x_j; 
         double* theta_j;
         double length;
@@ -85,7 +85,7 @@ void agents::equation(double t, double *y, double *dy){
 
         }
         for (int j = 0; j < 2; j++) dy[idx_start + j] = 1./N * temp_sum[j];
-        dy[idx_start + 2] = K/N * temp_sum_th;
+        dy[idx_start + 2] = K/N * temp_sum_th; //dy change vector
     }
 }
 
@@ -97,7 +97,7 @@ void agents3d::initialize(double *y){
         idx_start = 4*i;
         double length = 3;
         double x0,y0,z0;
-        while (length > 1){
+        while (length > 1){ //generate points in -1 to 1 cube; throw away pts not in unit sphere
             x0 = 2*rnd() - 1;
             y0 = 2 * rnd() - 1;
             z0 = 2 * rnd() - 1;
