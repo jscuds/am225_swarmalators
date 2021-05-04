@@ -42,9 +42,11 @@ class swarm {
         }
         // destructor
         ~swarm() {
-            delete [] vx;
+            delete [] checked_inter;
+            delete [] interactions;
+            delete [] w;
             delete [] vy;
-            delete [] w; 
+            delete [] vx;
         }
         // set up initial conditions
         void init(double *q);
