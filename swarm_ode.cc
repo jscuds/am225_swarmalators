@@ -67,6 +67,7 @@ void swarm::ff(double t_,double *in,double *out) {
             }
         }
     }
+    clear_checked();
 }
 
 bool swarm::eval_interaction(int i,int j,double *in){
@@ -97,6 +98,14 @@ bool swarm::eval_interaction(int i,int j,double *in){
             interactions[idx1] = false;
             interactions[idx2] = false;
             return false;
+        }
+    }
+}
+
+void swarm::clear_checked(){
+    for (int i = 0; i < N; i++){
+        for (int j = 0; j < N; j++){
+            checked_inter[i*N_int + j] = false;
         }
     }
 }

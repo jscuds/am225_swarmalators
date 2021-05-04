@@ -56,6 +56,7 @@ class swarm {
     private:
         //eval finite distance cuttoff
         bool eval_interaction(int i,int j,double *in);
+        void clear_checked();
 };
 
 /** Class to solve the Brusselator problem with the adaptive fourth-order Runge-Kutta
