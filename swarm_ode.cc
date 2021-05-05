@@ -1,22 +1,19 @@
 #include <stdio.h>
-#include "problem_1_rk4d.hh"
 #include <iostream>
 #include <cmath>
-#include "custom_rng_code.h"
+
 #include "swarm_ode.hh"
 
 /** This class has functions to specify the ode for problem 5. */
 
 // set up initial conditions
 void swarm::init(double *q) {
-    double t_temp, r_temp, rand;
+    double t_temp, r_temp, th0;
     custom_rng* c; c=new custom_rng(1);
     
     for (int i=0; i<3*N; i+=3) {
-        // generate random number
 
-
-        // get x and y positions
+        // generate (r,th) for pt, sqrt-ing r
         t_temp = 2 * M_PI * (c->doub());
         r_temp = sqrt(c->doub());
 
@@ -27,7 +24,7 @@ void swarm::init(double *q) {
         q[i+1] = r_temp*sin(t_temp);
         q[i+2] = th0;
     }
-    delete [] c;
+    delete c;
 }
 
 // evaluate RHS of ODE system
@@ -49,7 +46,7 @@ void swarm::ff(double t_,double *in,double *out) {
         for (int j=0;j<3*N;j+=3) {
 
             if (i != j) {
-                bool eval_temp = eval_interaction(i,j,in);
+                bool eval_temp = eval_interaction(i/3,j/3,in);
 
                 if (eval_temp == true){
                     // initialize variables for agent j
@@ -94,6 +91,11 @@ bool swarm::eval_interaction(int i,int j,double *in){
             interactions[idx2] = true;
             return true;
         } else{
+            // std::cout << "i: " << i << "\n";
+            // std::cout << "j: " << j << "\n";
+            // std::cout << "idx1: " << idx1 << "\n";
+            // std::cout << "idx2: " << idx2 << "\n";
+            // std::cout << "size: " << N_int*N_int << "\n";
             checked_inter[idx1] = true;
             checked_inter[idx2] = true;
 

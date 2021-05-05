@@ -20,7 +20,7 @@ depend:
 clean:
 	rm -f $(objs) $(execs)
 
-%.o: %.cpp
+%.o: %.cc
 	$(cxx) $(cflags) -c $<
 
 p5: problem_5.cc $(objs)
