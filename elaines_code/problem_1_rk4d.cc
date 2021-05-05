@@ -105,7 +105,8 @@ void p1_rk4d::solve_fixed(double duration,double Atol,bool output,int d_steps) {
         if(output) print(t,q);
         
     }
-    printf("num_steps: %d\n",num_steps);
+    // Prints final number of steps:
+    //printf("num_steps: %d\n",num_steps); 
 }
 
 /** Computes a Hermite interpolation of the solution, for dense output. The
