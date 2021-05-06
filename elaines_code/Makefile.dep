@@ -1,1 +1,1 @@
-problem_1_rk4d.o: problem_1_rk4d.cpp problem_1_rk4d.hh
+problem_1_rk4d.o: problem_1_rk4d.cc problem_1_rk4d.hh
