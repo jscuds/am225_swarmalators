@@ -8,6 +8,39 @@
 
 // set up initial conditions
 void swarm::init(double *q) {
+    if (dim == 2){
+        init2d(q);
+    } else{
+        custom_rng* c; c = new custom_rng(1);
+        double* state_test = new double[dim];
+
+        //make array of all zeros to pass in later
+        double* zero_vec = new double[dim];
+        for (int k = 0; k < dim; k++) zero_vec[k] = 0;
+
+        for (int i = 0; i < N_int; i++){
+            int idx_i = (dim + 1) * i;
+            double L = 2;
+            while (L > 1){
+                for (int j = 0; j < dim; j++){
+                    state_test[j] = 2*(c->doub()) - 1;
+                }
+                L = euclidean_distance(state_test,zero_vec);
+            }
+            //if it passed, update q
+            for (int j = 0; j < dim; j++){
+                q[idx_i + j] = state_test[j];
+            }
+            q[idx_i + dim] = 2*M_PI*(c->doub());
+        }
+        delete [] state_test;
+        delete [] zero_vec;
+        delete c;
+    }
+    std::cout << "initialized" << "\n";
+}
+
+void swarm::init2d(double* q){
     double t_temp, r_temp, th0;
     custom_rng* c; c=new custom_rng(1);
     

@@ -91,6 +91,9 @@ class swarm {
 
         //eval euclidean distance
         double euclidean_distance(double* x_i, double* x_j);
+
+        //init 2d only (just for cleaner init)
+        void init2d(double* q);
 };
 
 /** Class to solve the Brusselator problem with the adaptive fourth-order Runge-Kutta
