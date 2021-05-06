@@ -58,10 +58,19 @@ void swarm::ff(double t_,double *in,double *out) {
                     double xy_norm = sqrt(dx*dx + dy*dy);
                     double dtheta = theta_j - theta_i;
                     
+                    // ADDED calculate external force terms
+                    double F_dx = F_locx - x_i;
+                    double F_dy = F_locy - y_i;
+                    double force_loc_norm = sqrt(F_dx*F_dx + F_dy*F_dy);
+
+                    //if (force_loc_norm == 0) force_loc_norm = 1; // NECESSARY?? to ensure out[i+2] doesn't have div0 error
+
                     // update output
                     out[i] += N_inv*((dx/xy_norm)*(1.+J*cos(dtheta))-(dx/(xy_norm*xy_norm)));
                     out[i+1] += N_inv*((dy/xy_norm)*(1.+J*cos(dtheta))-(dy/(xy_norm*xy_norm)));
-                    out[i+2] += (K*N_inv)*sin(dtheta)/xy_norm;
+                    // ADDED 2nd component for Forced Swarmilator; should evaluate to 0 if F is 0
+                    out[i+2] += (K*N_inv)*sin(dtheta)/xy_norm + F*(cos(F_freq*t_ - theta_i)/force_loc_norm); 
+                    
                 } 
             }
         }

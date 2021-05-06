@@ -45,7 +45,7 @@ class custom_rng {
 class swarm {
     public:
         // constructor
-        const double J, K, N, r;
+        const double J, K, N, r, F, F_freq, F_locx, F_locy;
         double* const vx;
         double* const vy;
         double* const w;
@@ -55,14 +55,15 @@ class swarm {
         bool* checked_inter;
 
 
-        swarm(double J_, double K_, double N_, double r_): J(J_), K(K_), N(N_), r(r_),
+        swarm(double J_, double K_, double N_, double r_, double F_, double F_freq_, double F_locx_, double F_locy_): 
+            J(J_), K(K_), N(N_), r(r_), F(F_), F_freq(F_freq_), F_locx(F_locx_), F_locy(F_locy_),
             vx(new double[int(N)]), vy(new double[int(N)]), w(new double[int(N)]), N_inv(1./N),
             N_int(int(N)), interactions(new bool[N_int * N_int]), checked_inter(new bool[N_int * N_int]) {
             // initialize w and v = 0
             for (int i=0; i<N; i++) {
-                vx[i]=0.01;
-                vy[i]=0.01;
-                w[i]=0.1;
+                vx[i]=0.; //0.01;
+                vy[i]=0.; //0.01;
+                w[i]=0.; //0.1;
                 for (int j = 0; j < N; j++){
                     checked_inter[i*N_int + j] = false;
                 }
@@ -95,7 +96,9 @@ class swarm {
  * method. */
 class swarm_sol : public fsal_rk4d, public swarm {
     public:
-        swarm_sol(double J_, double K_, double N_, double r_ = -1) : fsal_rk4d(3*N_), swarm(J_, K_, N_, r_) {}
+        swarm_sol(double J_, double K_, double N_, double r_ = -1, double F_ = 0, 
+                  double F_freq_ = 0, double F_locx_ = 0, double F_locy_ = 0) :
+            fsal_rk4d(3*N_), swarm(J_, K_, N_, r_, F_, F_freq_, F_locx_, F_locy_) {}
         void ff(double t_,double *in,double *out) override {
             swarm::ff(t_,in,out);
         }
