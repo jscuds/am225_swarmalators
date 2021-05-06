@@ -32,15 +32,26 @@ void swarm::ff(double t_,double *in,double *out) {
     
     // for each agent
     for (int i=0;i<3*N;i+=3) {
-        int idx_forcing = i/3;
 
         // initialize variables for agent i and start summations
         double x_i = in[i], y_i = in[i+1], theta_i = in[i+2];
+        int idx_vw = i/3;
 
-        //forcing terms
-        out[i] = vx[idx_forcing];
-        out[i+1] = vy[idx_forcing];
-        out[i+2] = w[idx_forcing];
+        // initial velocity terms
+        if (F==0) { // without forcing
+            out[i] = vx[idx_vw];
+            out[i+1] = vy[idx_vw];
+            out[i+2] = w[idx_vw];
+        } else { // with forcing
+            out[i] = 0.;
+            out[i+1] = 0.;
+            
+            // add forcing to theta update
+            double F_dx = F_locx - x_i;
+            double F_dy = F_locy - y_i;
+            double force_loc_norm = sqrt(F_dx*F_dx + F_dy*F_dy);
+            out[i+2] = F*(cos(F_freq*t_ - theta_i)/force_loc_norm);
+        }
         
         // for each pairwise interaction between agents
         for (int j=0;j<3*N;j+=3) {
@@ -57,19 +68,11 @@ void swarm::ff(double t_,double *in,double *out) {
                     double dy = y_j - y_i;
                     double xy_norm = sqrt(dx*dx + dy*dy);
                     double dtheta = theta_j - theta_i;
-                    
-                    // ADDED calculate external force terms
-                    double F_dx = F_locx - x_i;
-                    double F_dy = F_locy - y_i;
-                    double force_loc_norm = sqrt(F_dx*F_dx + F_dy*F_dy);
-
-                    //if (force_loc_norm == 0) force_loc_norm = 1; // NECESSARY?? to ensure out[i+2] doesn't have div0 error
 
                     // update output
                     out[i] += N_inv*((dx/xy_norm)*(1.+J*cos(dtheta))-(dx/(xy_norm*xy_norm)));
                     out[i+1] += N_inv*((dy/xy_norm)*(1.+J*cos(dtheta))-(dy/(xy_norm*xy_norm)));
-                    // ADDED 2nd component for Forced Swarmilator; should evaluate to 0 if F is 0
-                    out[i+2] += (K*N_inv)*sin(dtheta)/xy_norm + F*(cos(F_freq*t_ - theta_i)/force_loc_norm); 
+                    out[i+2] += (K*N_inv)*sin(dtheta)/xy_norm;
                     
                 } 
             }
