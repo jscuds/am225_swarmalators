@@ -1,62 +1,57 @@
 #include <stdio.h>
 #include <iostream>
 #include <cmath>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
 
 #include "swarm_ode.hh"
 
 /** This class has functions to specify the ode for problem 5. */
 
 // set up initial conditions
-void swarm::init(double *q) {
+void swarm::init(double* q){
+    gsl_rng* c = gsl_rng_alloc(gsl_rng_taus2);
+    double th0 = 0, r_cur = 0;
+    int idx = 0;
     if (dim == 2){
-        init2d(q);
-    } else{
-        custom_rng* c; c = new custom_rng(1);
-        double* state_test = new double[dim];
-
-        //make array of all zeros to pass in later
-        double* zero_vec = new double[dim];
-        for (int k = 0; k < dim; k++) zero_vec[k] = 0;
-
+        double x = 0, y = 0;
         for (int i = 0; i < N_int; i++){
-            int idx_i = (dim + 1) * i;
-            double L = 2;
-            while (L > 1){
-                for (int j = 0; j < dim; j++){
-                    state_test[j] = 2*(c->doub()) - 1;
-                }
-                L = euclidean_distance(state_test,zero_vec);
-            }
-            //if it passed, update q
-            for (int j = 0; j < dim; j++){
-                q[idx_i + j] = state_test[j];
-            }
-            q[idx_i + dim] = 2*M_PI*(c->doub());
+            idx = 3*i;
+            gsl_ran_dir_2d(c, &x, &y);
+            r_cur = sqrt(gsl_rng_uniform(c));
+            th0 = 2 * M_PI * gsl_rng_uniform(c);
+            q[idx] = r_cur * x;
+            q[idx + 1] = r_cur * y;
+            q[idx + 2] = th0;
         }
-        delete [] state_test;
-        delete [] zero_vec;
-        delete c;
+    } else if (dim == 3){
+        double x = 0, y = 0, z = 0;
+        for (int i = 0; i < N_int; i++){
+            idx = 4*i;
+            gsl_ran_dir_3d(c, &x, &y, &z);
+            r_cur = pow(gsl_rng_uniform(c),1/3.);
+            th0 = 2 * M_PI * gsl_rng_uniform(c);
+            q[idx] = r_cur * x;
+            q[idx + 1] = r_cur * y;
+            q[idx + 2] = r_cur * z;
+            q[idx + 3] = th0;
+        }
+    } else {
+        double* state_temp = new double[dim];
+        double dim_inv = 1./dim;
+        for (int i = 0; i < N; i++){
+            gsl_ran_dir_nd(c,dim,state_temp);
+            r_cur = pow(gsl_rng_uniform(c),dim_inv);
+            th0 = 2 * M_PI * gsl_rng_uniform(c);
+            for (int k = 0; k < dim; k++){
+                idx = i*(dim + 1) + k;
+                q[idx] = r_cur * state_temp[k];
+            }
+            q[i*(dim + 1) + dim] = th0;
+        }
+        delete [] state_temp;
     }
-    std::cout << "initialized" << "\n";
-}
-
-void swarm::init2d(double* q){
-    double t_temp, r_temp, th0;
-    custom_rng* c; c=new custom_rng(1);
-    
-    for (int i=0; i<3*N; i+=3) {
-
-        // generate (r,th) for pt, sqrt-ing r
-        t_temp = 2 * M_PI * (c->doub());
-        r_temp = sqrt(c->doub());
-
-        th0 = 2 * M_PI * (c->doub());
-
-        // initialize solution vector
-        q[i] = r_temp*cos(t_temp);
-        q[i+1] = r_temp*sin(t_temp);
-        q[i+2] = th0;
-    }
+    gsl_rng_free(c);
     delete c;
 }
 
