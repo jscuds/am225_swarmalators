@@ -52,7 +52,6 @@ void swarm::init(double* q){
         delete [] state_temp;
     }
     gsl_rng_free(c);
-    delete c;
 }
 
 // evaluate RHS of ODE system
