@@ -13,6 +13,7 @@
 #include <cmath>
 
 #include "fsal_rk4d.hh"
+#include "point.hh"
 
 /** Custom random number generator based of "Ran" routine in Numerical Recipes
  * by Press et al. */
@@ -51,38 +52,83 @@ class swarm {
         const double N_inv;
         bool* interactions;
         bool* checked_inter;
+    
+        // for grid of boxes
+        const double n_boxes; // number of boxes in each dimension
+        const int total_boxes, box_max; // total number of boxes, max number of points for each box
+        double* num_boxes; // number of boxes along each dimension
+        double* grid_dims; // tracks min/max dimensions for grid
+        double* box_dims; // dxdydz dimensions of boxes
+        int* pt_count; // array for storing total number of points in each box
+        point** boxes; // pointer to array of boxes (each box is an array of points)
 
 
         swarm(double J_, double K_, int N_, int dim_, double r_): J(J_), K(K_), N(N_), r(r_), dim(dim_),
             N_int(int(N_)), forcing(new double[(dim + 1) * N_int]), N_inv(1./N),
-            interactions(new bool[N_int * N_int]), checked_inter(new bool[N_int * N_int]) {
+            interactions(new bool[N_int * N_int]), checked_inter(new bool[N_int * N_int]),
+            n_boxes(20.), total_boxes(int(pow(n_boxes,dim))), box_max(100),
+            num_boxes(new double[dim]), grid_dims(new double[2*dim]), box_dims(new double[dim]),
+            pt_count(new int[total_boxes]), boxes(new point *[total_boxes]) {
+                
             // initialize w and v = 0
             for (int i=0; i<N; i++) {
                 int idx = (dim + 1)*i;
                 for (int j = 0; j < dim; j++){
-                    forcing[idx + j] = 0.01;
+                    forcing[idx + j] = 0.;
                 }
-                forcing[idx + dim] = 0.1;
+                forcing[idx + dim] = 0.;
 
                 for (int j = 0; j < N; j++){
                     checked_inter[i*N_int + j] = false;
                 }
             }
+                
+            // initialize grid of boxes
+            for (int i=0; i<dim; i++) num_boxes[i]=n_boxes;
+            for (int i=0; i<total_boxes; i++) pt_count[i]=0;
+            for (int i=0; i<total_boxes; i++) boxes[i]=new point[box_max];
+                
         }
         // destructor
         ~swarm() {
             delete [] checked_inter;
             delete [] interactions;
             delete [] forcing;
+            delete [] num_boxes;
+            delete [] grid_dims;
+            delete [] box_dims;
+            delete [] pt_count;
+            delete [] boxes;
         }
         // set up initial conditions
         void init(double *q);
 
         // evaluate RHS of ODE system
         void ff(double t_,double *in,double *out);
+        void ff2(double t_,double *in,double *out);
 
         
     private:
+    
+        //get dimensions of grid
+        void get_grid_dimensions(double *in, int dim);
+    
+        //populate boxes with points
+        void populate_boxes(double *in);
+    
+        //clear boxes
+        void clear_boxes();
+    
+        // evaluate equations for points i and j
+        void evaluate_equations(int idx_i, int idx_j, double* x_i, double* x_j, double theta_i,
+                                double theta_j, int dim, double *out, double *in);
+        
+        // extract xyz data from point
+        void update_xyz(double *x, point p);
+    
+        // get high/low indices of boxes in subgrid
+        void get_neighbors(double *x, double r, int *subgrid_idx, int dim);
+    
         //eval finite distance cuttoff
         bool eval_interaction(int i,int j,double *in);
 
