@@ -14,14 +14,13 @@
 
 int main() {
     
-    double J = 1, K = -0.2, N = 1000;
+    double J = 0.5, K = 0.5, N = 250, r = -1.;
+//    int dim = 2;
     
-    std::unique_ptr<swarm_sol> o(new swarm_sol(J,K,N,0.5));
+    std::unique_ptr<swarm_sol> o(new swarm_sol(J,K,N,r));
     //swarm_sol* o; o=new swarm_sol(J,K,N,0.5);
     o->filename = "test_finite.txt";
-    o->solve_fixed(10,1e-6,true,5);
-
-    //delete o;
+    o->solve_fixed(250.,1e-6,true,500);
     
 }
 
