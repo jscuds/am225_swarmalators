@@ -1,6 +1,7 @@
 # Makefile for final project
 cxx = g++ -fopenmp
 cflags = -Wall -ggdb -O3 #-fsanitize=address -ansi -pedantic
+clibs = -lgsl
 
 # Lists of files to be built
 objs = fsal_rk4d.o swarm_ode.o
@@ -21,9 +22,9 @@ clean:
 	rm -f $(execs) $(objs)
 
 %.o: %.cc
-	$(cxx) $(cflags) -c $<
+	$(cxx) $(cflags) -c $< $(clibs)
 
 test_swarm: test_swarm.cc $(objs)
-	$(cxx) $(cflags) -o $@ $^
+	$(cxx) $(cflags) -o $@ $^ $(clibs)
 
 .PHONY: clean depend
