@@ -66,6 +66,7 @@ void swarm::ff(double t_,double *in,double *out) {
     // for each agent
     for (int i = 0;i < N;i++) {
         idx_i = (dim + 1)*i;
+        double num_inter = 1;
         
         // initialize variables for agent i and start summations
         // xx_i = in[idx_i] = *(in + idx_i)
@@ -77,6 +78,20 @@ void swarm::ff(double t_,double *in,double *out) {
             out[idx_i + j] = forcing[idx_i + j];
 
         }
+        if (r >= 0){
+            for (int j = 0; j < N; j++){
+                if (i != j){
+                    bool eval_temp = eval_interaction(i,j,in);
+                    if (eval_temp == true){
+                        num_inter++;
+                    }
+                }
+            }
+        } else{
+            num_inter = N;
+        }
+        //std::cout << num_inter << "\n";
+        
         
         // for each pairwise interaction between agents
         for (int j = 0;j < N;j++) {
@@ -103,10 +118,12 @@ void swarm::ff(double t_,double *in,double *out) {
                     double L_inv = 1.0/L;
                     double L_fac = 1.0/L_mult;
 
+                    double N_i_inv = 1.0/num_inter;
+
                     // update output
                     for (int k = 0; k < dim; k++){
                         dx = x_j[k] - x_i[k];
-                        out[idx_i + k] += N_inv * (dx*L_inv*(1 + J*cos(dtheta)) - dx*L_fac);
+                        out[idx_i + k] += N_i_inv * (dx*L_inv*(1 + J*cos(dtheta)) - dx*L_fac);
                     }
                     out[idx_i + dim] += (K*N_inv)*sin(dtheta) * L_inv;
                 } 
