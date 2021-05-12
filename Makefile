@@ -6,7 +6,7 @@ clibs = -lgsl
 # Lists of files to be built
 objs = fsal_rk4d.o swarm_ode.o
 src=$(patsubst %.o,%.cc,$(objs) $(mg_objs))
-execs = test_swarm
+execs = basic_swarm forced_swarm finite_swarm
 
 all: $(execs)
 
@@ -24,7 +24,13 @@ clean:
 %.o: %.cc
 	$(cxx) $(cflags) -c $< $(clibs)
 
-test_swarm: test_swarm.cc $(objs)
+basic_swarm: run_basic_swarm.cc $(objs)
+	$(cxx) $(cflags) -o $@ $^ $(clibs)
+
+forced_swarm: run_forced_swarm.cc $(objs)
+	$(cxx) $(cflags) -o $@ $^ $(clibs)
+
+finite_swarm: run_finite_swarm.cc $(objs)
 	$(cxx) $(cflags) -o $@ $^ $(clibs)
 
 .PHONY: clean depend
