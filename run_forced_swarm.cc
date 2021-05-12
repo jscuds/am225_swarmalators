@@ -13,11 +13,12 @@
 
 int main() {
     
-    double J = 1, K = 0, N = 1000, r = -1;
+    double J = 0.1, K = 1, N = 500, r = -1;
     double F_freq=3*M_PI/2, F_locx=0, F_locy=0, F_locz=0;
     double F;
     
-    for (int f=0; f<6; f++) {
+    for (int f=0; f<5; f++) {
+
         F = double(f);
         
         std::unique_ptr<swarm_sol> o(new swarm_sol(J,K,N,r,F,F_freq,F_locx,F_locy,F_locz));
