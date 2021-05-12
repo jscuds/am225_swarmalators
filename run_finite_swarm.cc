@@ -13,7 +13,7 @@
 
 int main() {
     
-    double J = 0.1, K = -1, N = 100;
+    double J = 0.1, K = 1, N = 100;
     double r[4];
     r[0]=-1; r[1]=2; r[2]=1.;r[3]=0.5;
     
