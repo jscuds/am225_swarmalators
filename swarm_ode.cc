@@ -175,6 +175,7 @@ void swarm::get_neighbors(double* x, double r, int *subgrid_idx, int dim) {
     }
 }
 
+// evaluate equations for points i and j
 void swarm::evaluate_equations(int idx_i, int idx_j, double* x_i, double* x_j, double theta_i,
                                double theta_j, int dim, double *out, double *in) {
     
@@ -195,11 +196,12 @@ void swarm::evaluate_equations(int idx_i, int idx_j, double* x_i, double* x_j, d
         }
         double L_inv = 1.0/L;
         double L_fac = 1.0/L_mult;
+        double N_i_inv = 1.0/num_inter;
 
         // update output
         for (int k = 0; k < dim; k++){
             dx = x_j[k] - x_i[k];
-            out[idx_i + k] += N_inv * (dx*L_inv*(1 + J*cos(dtheta)) - dx*L_fac);
+            out[idx_i + k] += N_i_inv * (dx*L_inv*(1 + J*cos(dtheta)) - dx*L_fac);
         }
         out[idx_i + dim] += (K*N_inv)*sin(dtheta) * L_inv;
     }
@@ -211,6 +213,7 @@ void swarm::ff(double t_,double *in,double *out) {
     double* x_i; x_i = new double[3];
     double* x_j; x_j = new double[3];
     double theta_i,theta_j;
+    double F_dx, F_dy, F_dz, force_loc_norm;
     int* subgrid_idx; subgrid_idx = new int[2*dim];
     int idx_i, idx_j, box_idx;
     point p_i, p_j;
@@ -233,13 +236,68 @@ void swarm::ff(double t_,double *in,double *out) {
             theta_i = p_i.theta;
             idx_i = p_i.idx;
             
+            // reset number of interactions
+            num_inter = 1;
+            
             // initialize forcing
             for (int j = 0; j < dim + 1;j++){
-                out[idx_i+j] = forcing[idx_i+j];
+                if (F==0) { // without external forcing
+                    out[idx_i+j] = forcing[idx_i+j];
+                } else { // with external forcing
+                    out[idx_i+j] = 0;
+                    if (j==dim) {
+                        // add forcing to theta update
+                        F_dx = F_locx - p_i.x;
+                        F_dy = F_locy - p_i.y;
+                        if (dim==2) {
+                            force_loc_norm = sqrt(F_dx*F_dx + F_dy*F_dy);
+                        } else {
+                            F_dz = F_locz - p_i.z;
+                            force_loc_norm = sqrt(F_dx*F_dx + F_dy*F_dy + F_dz*F_dz);
+                        }
+                        out[idx_i+j] = F*(cos(F_freq*t_ - theta_i)/force_loc_norm);
+                    }
+                }
             }
+
             
             // calculate subgrid
             get_neighbors(x_i, r, subgrid_idx, dim);
+            
+            // calculate number of interactions
+            if (r >= 0) {
+                for (int i_box = subgrid_idx[0];i_box <= subgrid_idx[1];i_box++) { //width of subgrid
+                    for (int j_box = subgrid_idx[2];j_box <= subgrid_idx[3];j_box++) { //height of subgrid
+                        if (dim==2) {
+                            box_idx = i_box*num_boxes[0] + j_box;
+                            // iterate through points in subgrid boxes
+                            for (int pp = 0;pp < pt_count[box_idx];pp++) {
+                                // check if two points are within radius
+                                idx_j = boxes[box_idx][pp].idx;
+                                if (idx_i!=idx_j) {
+                                    bool eval_temp = eval_interaction(idx_i,idx_j,in);
+                                    if (eval_temp == true) num_inter++;
+                                }
+                            }
+                        } else {
+                            for (int k_box = subgrid_idx[4];k_box <= subgrid_idx[5];k_box++) {
+                                box_idx = i_box*num_boxes[0] + j_box + k_box*(num_boxes[0]*num_boxes[1]);
+                                // iterate through points in subgrid boxes
+                                for (int pp = 0;pp < pt_count[box_idx];pp++) {
+                                    // check if two points are within radius
+                                    idx_j = boxes[box_idx][pp].idx;
+                                    if (idx_i!=idx_j) {
+                                        bool eval_temp = eval_interaction(idx_i,idx_j,in);
+                                        if (eval_temp == true) num_inter++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                num_inter = N;
+            }
             
             // iterate through subgrid boxes
             for (int i_box = subgrid_idx[0];i_box <= subgrid_idx[1];i_box++) { //width of subgrid
@@ -295,7 +353,6 @@ void swarm::ff(double t_,double *in,double *out) {
 
 // evaluate RHS of ODE system
 void swarm::ff2(double t_,double *in,double *out) {
-    //std::cout << "t: " << t_ << "\n";
     
     double* x_i;
     double* x_j;
@@ -305,22 +362,22 @@ void swarm::ff2(double t_,double *in,double *out) {
     // for each agent
     for (int i = 0;i < N;i++) {
         idx_i = (dim + 1)*i;
-        double num_inter = 1;
+        num_inter = 1;
         
         // initialize variables for agent i and start summations
-        // xx_i = in[idx_i] = *(in + idx_i)
         x_i = in + idx_i;
         theta_i = in[idx_i + dim];
 
         //forcing terms--[note/todo: should we just initially copy the whole forcing to out?]
         for (int j = 0; j < dim + 1; j++){
             out[idx_i + j] = forcing[idx_i + j];
-
         }
+        
         if (r >= 0){
             for (int j = 0; j < N; j++){
                 if (i != j){
-                    bool eval_temp = eval_interaction(i,j,in);
+                    idx_j = (dim + 1) * j;
+                    bool eval_temp = eval_interaction(idx_i,idx_j,in);
                     if (eval_temp == true){
                         num_inter++;
                     }
@@ -329,15 +386,12 @@ void swarm::ff2(double t_,double *in,double *out) {
         } else{
             num_inter = N;
         }
-        //std::cout << num_inter << "\n";
-        
         
         // for each pairwise interaction between agents
         for (int j = 0;j < N;j++) {
 
             if (i != j) {
                 
-//                bool eval_temp = eval_interaction(i,j,in);
                 idx_j = (dim + 1) * j;
                 bool eval_temp = eval_interaction(idx_i,idx_j,in);
                 
@@ -406,7 +460,6 @@ bool swarm::eval_interaction(int idx_i,int idx_j,double *in){
 //        int idx_i = (dim + 1)*i;
 //        int idx_j = (dim + 1)*j;
         
-
         double r_temp = euclidean_distance(in+idx_i,in+idx_j);
 
         if (r_temp < r){

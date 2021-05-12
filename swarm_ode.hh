@@ -15,43 +15,18 @@
 #include "fsal_rk4d.hh"
 #include "point.hh"
 
-/** Custom random number generator based of "Ran" routine in Numerical Recipes
- * by Press et al. */
-class custom_rng {
-    public:
-        unsigned long a,b,c;
-        custom_rng(unsigned long seed) : b(4101842887655102017L), c(1) {
-            if(sizeof(unsigned long)<8) {
-                fputs("Error: 'unsigned long' type too short\n",stderr);
-                exit(1);
-            }
-            a=seed^b;int64();
-            b=a;int64();
-            c=b;int64();
-        }
-        unsigned long int64() {
-            a=a*2862933555777941757L+7046029254386353087L;
-            b^=b>>17;b^=b<<31;b^=b>>8;
-            c=4294957665U*(c&0xffffffff)+(c>>32);
-            unsigned long d=a^(a<<21);
-            d^=d>>35;d^=d<<4;
-            return (d+b)^c;
-        }
-        inline double doub() {
-            return 5.42101086242752217E-20*int64();
-        }
-};
-
 /** This class has functions to specify the ode for problem 5. */
 class swarm {
     public:
         // constructor
         const double J, K, N, r;
         const int dim, N_int;
+        const double F, F_freq, F_locx, F_locy, F_locz;
         double* const forcing;
         const double N_inv;
         bool* interactions;
         bool* checked_inter;
+        double num_inter;
     
         // for grid of boxes
         const double n_boxes; // number of boxes in each dimension
@@ -63,9 +38,10 @@ class swarm {
         point** boxes; // pointer to array of boxes (each box is an array of points)
 
 
-        swarm(double J_, double K_, int N_, int dim_, double r_): J(J_), K(K_), N(N_), r(r_), dim(dim_),
-            N_int(int(N_)), forcing(new double[(dim + 1) * N_int]), N_inv(1./N),
-            interactions(new bool[N_int * N_int]), checked_inter(new bool[N_int * N_int]),
+        swarm(double J_, double K_, int N_, int dim_, double r_, double F_, double F_freq_, double F_locx_, double F_locy_, double F_locz_):
+            J(J_), K(K_), N(N_), r(r_), dim(dim_), N_int(int(N_)), F(F_), F_freq(F_freq_), F_locx(F_locx_), F_locy(F_locy_), F_locz(F_locz_),
+            forcing(new double[(dim + 1) * N_int]), N_inv(1./N),
+            interactions(new bool[N_int * N_int]), checked_inter(new bool[N_int * N_int]), num_inter(1.),
             n_boxes(20.), total_boxes(int(pow(n_boxes,dim))), box_max(100),
             num_boxes(new double[dim]), grid_dims(new double[2*dim]), box_dims(new double[dim]),
             pt_count(new int[total_boxes]), boxes(new point *[total_boxes]) {
@@ -143,7 +119,8 @@ class swarm {
  * method. */
 class swarm_sol : public fsal_rk4d, public swarm {
     public:
-        swarm_sol(double J_, double K_, double N_, double r_ = -1) : fsal_rk4d(3*N_), swarm(J_, K_, N_, 2, r_) {}
+        swarm_sol(double J_, double K_, double N_, double r_ = -1, double F_ = 0,
+                  double F_freq_ = 0, double F_locx_ = 0, double F_locy_ = 0, double F_locz_ = 0) : fsal_rk4d(3*N_), swarm(J_, K_, N_, 2, r_, F_, F_freq_, F_locx_, F_locy_, F_locz_) {}
         void ff(double t_,double *in,double *out) override {
             swarm::ff(t_,in,out);
         }
@@ -154,8 +131,9 @@ class swarm_sol : public fsal_rk4d, public swarm {
 
 class swarm_sol_3d : public fsal_rk4d, public swarm {
     public:
-        swarm_sol_3d(double J_, double K_, double N_, double r_ = -1) : fsal_rk4d(4*N_), 
-            swarm(J_, K_, N_, 3, r_) {}
+        swarm_sol_3d(double J_, double K_, double N_, double r_ = -1, double F_ = 0,
+                     double F_freq_ = 0, double F_locx_ = 0, double F_locy_ = 0, double F_locz_ = 0) : fsal_rk4d(4*N_),
+            swarm(J_, K_, N_, 3, r_, F_, F_freq_, F_locx_, F_locy_, F_locz_) {}
         void ff(double t_,double *in,double *out) override {
             swarm::ff(t_,in,out);
         }
